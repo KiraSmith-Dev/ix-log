@@ -16,8 +16,8 @@
     "@cspotcode/source-map": "^0.8.0",
     "app-root-path": "^3.0.0",
     "chalk": "^4.1.2",
-    "easy-reflect": "^1.0.3",
-    "ix-inspect": "^1.0.1",
+    "easy-reflect": "^1.0.6",
+    "ix-inspect": "^1.0.2",
     "luxon": "^3.4.4"
   },
   "devDependencies": {
