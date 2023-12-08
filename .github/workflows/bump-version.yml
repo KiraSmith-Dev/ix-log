@@ -1,0 +1,16 @@
+name: Bump Version
+
+on:
+  workflow_dispatch:
+    inputs:
+      new-version:
+        description: 'New version ex: v1.0.0'
+        required: true
+
+jobs:
+  bump-version:
+    permissions:
+      contents: write
+    uses: KiraSmith-Dev/KiraSmith-Dev/.github/workflows/npm-bump-version.yml@main
+    with:
+      new-version: ${{ github.event.inputs.new-version }}

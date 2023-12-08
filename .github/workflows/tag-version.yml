@@ -1,0 +1,13 @@
+name: Tag Version
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  tag-version:
+    permissions:
+      contents: write
+    uses: KiraSmith-Dev/KiraSmith-Dev/.github/workflows/npm-tag-version.yml@main
+    with:
+      node-version: 16.x

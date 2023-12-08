@@ -1,0 +1,33 @@
+name: Publish package
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  test:
+    permissions:
+      contents: read
+    uses: KiraSmith-Dev/KiraSmith-Dev/.github/workflows/checkout-build-test.yml@main
+  publish-github:
+    needs: test
+    permissions:
+      packages: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Publish to github
+        uses: KiraSmith-Dev/KiraSmith-Dev/.github/actions/publish-github@main
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  publish-npm:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Publish to npm
+        uses: KiraSmith-Dev/KiraSmith-Dev/.github/actions/publish-npm@main
+        with:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}

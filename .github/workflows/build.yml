@@ -1,0 +1,14 @@
+name: Build
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    permissions:
+      contents: write
+    uses: KiraSmith-Dev/KiraSmith-Dev/.github/workflows/build-test-commit.yml@main
+    with:
+      node-version: 16.x
+      output-glob: 'dist/*'
