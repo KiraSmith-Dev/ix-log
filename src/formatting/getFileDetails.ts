@@ -62,10 +62,6 @@ function getNearestPackageInformation(directory: string): PackageInformation {
     if (packageCache.has(directory))
         return packageCache.get(directory) as PackageInformation;
     
-    // Fallback to our folder name
-    if (!directory.startsWith(appRootPathString)) 
-        return setPackageInformation(directory, genDefaultPackageInformation());
-    
     const packageInformation = getDirectoryPackageInformation(directory);
     
     if (packageInformation.hasPackageJSON)
@@ -86,7 +82,7 @@ function isInside(parent: string, dir: string): boolean {
     const relative = path.relative(parent, dir);
     const isInsideParent = !relative.startsWith('..') && !path.isAbsolute(relative);
     // Make an exception for our test since it won't be making any calls
-    return isInsideParent && !dir.endsWith('test.js');
+    return isInsideParent;
 }
 
 const fileToSourceMap = new Map<string, RawSourceMap>();
@@ -151,12 +147,11 @@ export interface FileDetails {
 
 export default function getFileDetails<T extends IxLogLevelData>(options: IxConfigurationManager<T>): FileDetails {
     const info: FileDetails = {};
-    
-    // Get callsite of the caller of the log function - magic number 11 is how many callsites are between this and the caller
-    const caller = easyReflect.getCallsite({ depth: 0, filter: callsite => !isInside(appRootPathString, callsite.getFileName() ?? '') });;
-    if (!caller)
+    const callers = easyReflect.getStack({ filter: callsite => !isInside(appRootPathString, callsite.getFileName() ?? '') });
+    if (!callers.length)
         return info;
     
+    const caller = callers[0]!;
     const fileMeta = getFileAndLineNumbers(caller, options);
     if (!fileMeta)
         return info;
