@@ -3,6 +3,10 @@
   "version": "1.0.1",
   "description": "",
   "main": "./dist/ixLog.js",
+  "types": "./dist/ixLog.d.ts",
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc",
     "dev": "tsc-watch --onSuccess \"node --trace-warnings ./dist/test\"",
