@@ -138,6 +138,32 @@ function getFileAndLineNumbers<T extends IxLogLevelData>(caller: easyReflect.Cal
     }
 }
 
+function getSourceMappedFilePath<T extends IxLogLevelData>(filePath: string, options: IxConfigurationManager<T>) {
+    if (!options.misc.useSourceMaps)
+        return filePath;
+    
+    const sourceMapConsumer = getSourceMapConsumerForFile(filePath);
+    if (!sourceMapConsumer)
+        return null;
+    
+    function cleanup() {
+        sourceMapConsumer!.destroy();
+    }
+    
+    const originalPosition = sourceMapConsumer.originalPositionFor({
+        line: 1,
+        column: 1
+    });
+    
+    if (!originalPosition.source) {
+        cleanup();
+        return null;
+    }
+    
+    cleanup();
+    return originalPosition.source;
+}
+
 export interface FileDetails {
     service?: string;
     file?: string;
@@ -167,7 +193,7 @@ export default function getFileDetails<T extends IxLogLevelData>(options: IxConf
     
     info.service = nearestPackage.name;
     
-    const callerContainerEntryPoint = path.join(nearestPackage.dir, nearestPackage.main);
+    const callerContainerEntryPoint = getSourceMappedFilePath(path.join(nearestPackage.dir, nearestPackage.main), options);
     const callerIsEntryPoint = path.join(fileMeta.filePath.dir, fileMeta.filePath.base) === callerContainerEntryPoint;
     
     // If it's the entry point of the whole process, omit file name - service name will show alone
