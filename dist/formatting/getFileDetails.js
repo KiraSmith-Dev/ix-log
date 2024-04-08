@@ -133,6 +133,26 @@ function getFileAndLineNumbers(caller, options) {
         columnNumber: (_f = originalPosition.column) !== null && _f !== void 0 ? _f : 0
     };
 }
+function getSourceMappedFilePath(filePath, options) {
+    if (!options.misc.useSourceMaps)
+        return filePath;
+    const sourceMapConsumer = getSourceMapConsumerForFile(filePath);
+    if (!sourceMapConsumer)
+        return null;
+    function cleanup() {
+        sourceMapConsumer.destroy();
+    }
+    const originalPosition = sourceMapConsumer.originalPositionFor({
+        line: 1,
+        column: 1
+    });
+    if (!originalPosition.source) {
+        cleanup();
+        return null;
+    }
+    cleanup();
+    return originalPosition.source;
+}
 function getFileDetails(options) {
     const info = {};
     const callers = easyReflect.getStack({ filter: callsite => { var _a; return !isInside(appRootPathString, (_a = callsite.getFileName()) !== null && _a !== void 0 ? _a : ''); } });
@@ -149,7 +169,7 @@ function getFileDetails(options) {
         return info;
     const nearestPackage = getNearestPackageInformation(fileMeta.filePath.dir);
     info.service = nearestPackage.name;
-    const callerContainerEntryPoint = path_1.default.join(nearestPackage.dir, nearestPackage.main);
+    const callerContainerEntryPoint = getSourceMappedFilePath(path_1.default.join(nearestPackage.dir, nearestPackage.main), options);
     const callerIsEntryPoint = path_1.default.join(fileMeta.filePath.dir, fileMeta.filePath.base) === callerContainerEntryPoint;
     // If it's the entry point of the whole process, omit file name - service name will show alone
     if (callerIsEntryPoint && require.main && require.main.path === fileMeta.filePath.dir)
