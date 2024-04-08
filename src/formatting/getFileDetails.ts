@@ -49,10 +49,10 @@ function toUpperCamelCase(input: string): string {
     return firstLetterToUpperCase(input.replace( /-([a-z])/gi, ( _, match ) => match.toLocaleUpperCase()));
 }
 
-function setPackageInformation(directory: string, name: string | PackageInformation, main?: string, hasPackageJSON?: boolean, dir?: string): PackageInformation {
-    const packageInformation = (typeof name === 'string') ? { name, main, hasPackageJSON, dir } as PackageInformation : name as PackageInformation;
+function setPackageInformation(dir: string, name: string | PackageInformation, main = '', hasPackageJSON = false): PackageInformation {
+    const packageInformation = typeof name === 'string' ? { name, main, hasPackageJSON, dir } : name;
     packageInformation.name = toUpperCamelCase(packageInformation.name);
-    packageCache.set(directory, packageInformation);
+    packageCache.set(dir, packageInformation);
     return packageInformation;
 }
 
