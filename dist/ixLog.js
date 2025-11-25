@@ -15,7 +15,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 var _IxLoggerClass_levelHandler, _IxLoggerClass_logLevelData;
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.addColorToTransport = exports.log = exports.newIxLogger = exports.defaultOptions = exports.chalk = void 0;
+exports.addColorToTransport = exports.defaultIxLogger = exports.log = exports.newIxLogger = exports.defaultOptions = exports.chalk = void 0;
 const chalk_1 = __importDefault(require("chalk"));
 exports.chalk = chalk_1.default;
 const formatting_1 = __importDefault(require("./formatting"));
@@ -62,6 +62,7 @@ function newIxLogger(logLevelData, options = {}) {
 }
 exports.newIxLogger = newIxLogger;
 exports.log = newIxLogger(levels_1.defaultLogLevelData);
+exports.defaultIxLogger = exports.log;
 var configuration_3 = require("./configuration");
 Object.defineProperty(exports, "addColorToTransport", { enumerable: true, get: function () { return configuration_3.addColorToTransport; } });
 exports.default = exports.log;

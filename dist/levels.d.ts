@@ -26,7 +26,7 @@ export declare const defaultLogLevelData: {
         color: ChalkInstance;
     };
 };
-export declare type IxLogLevelDataEntry<ColorType extends ChalkInstance | string> = {
+export type IxLogLevelDataEntry<ColorType extends ChalkInstance | string> = {
     symbol: string;
     color?: ColorType;
 };
@@ -36,13 +36,13 @@ export interface IxLogLevelData {
 interface IxLeveledLogMethod<T extends IxLogLevelData> {
     (...data: any[]): IxLogger<T>;
 }
-export declare type IxLogger<T extends IxLogLevelData> = {
+export type IxLogger<T extends IxLogLevelData> = {
     [Property in (keyof T)]: IxLeveledLogMethod<T>;
 } & {
     setLevel: (level: IxLevel<T>) => void;
     options: IxConfigurationManager<T>;
 };
-export declare type IxLevel<T extends IxLogLevelData> = keyof Omit<IxLogger<T>, 'setLevel'>;
+export type IxLevel<T extends IxLogLevelData> = keyof Omit<IxLogger<T>, 'setLevel'>;
 export interface IxLoggerConstructor<T extends IxLogLevelData> {
     new (levelData: T): IxLogger<T>;
 }
