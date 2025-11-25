@@ -62,7 +62,6 @@ function setPackageInformation(cacheKey: string, packageInformation: PackageInfo
         return packageInformation;
     }
     
-    console.log(`Setting package information for directory:`, packageInformation);
     packageInformation.name = toUpperCamelCase(packageInformation.name);
     packageCache.set(cacheKey, packageInformation);
     return packageInformation;
@@ -81,12 +80,10 @@ function getNearestPackageInformation(directory: string, isEntryPoint = false): 
         return setPackageInformation(cacheKey, packageInformation);
     
     const thisDirectoryInfo = path.parse(directory);
-    console.log(`Parsed directory info:`, thisDirectoryInfo, directory);
     // Dead end / root reached
     if (thisDirectoryInfo.dir === directory)
         return setPackageInformation(cacheKey, null);
     
-    console.log(`Package information main:`, packageInformation.main);
     if (packageInformation.main !== 'index.xs') {
         return setPackageInformation(cacheKey, { dir: directory, name: thisDirectoryInfo.name, main: packageInformation.main, hasPackageJSON: false });
     }
@@ -189,8 +186,6 @@ function getSourceMappedFilePath<T extends IxLogLevelData>(filePath: string, opt
     if (!sourceMap)
         return filePath;
     
-    //console.log('Source map source:', sourceMap.sources[0]);
-    
     if (!sourceMap.sources[0])
         return filePath;
     
@@ -225,9 +220,7 @@ export default function getFileDetails<T extends IxLogLevelData>(options: IxConf
     
     // If we can't get require.main.filename just fallback to the file name
     const processMain = require.main && path.parse(getSourceMappedFilePath(require.main.filename, options) || '');
-    //console.log('req main filename:', require.main?.filename);
     if (!processMain) {
-        console.log(`No require.main, falling back to file name only`);
         info.file = fileMeta.filePath.name;
         if (['index.ts', 'index.js', 'index'].includes(info.file))
             info.file = '';
@@ -238,8 +231,6 @@ export default function getFileDetails<T extends IxLogLevelData>(options: IxConf
     const fileMetaFile = path.resolve(path.format(fileMeta.filePath));
     const isProcessMain = processMainFile === fileMetaFile;
     const inDirWithProcessMain = path.parse(processMainFile).dir === path.parse(fileMetaFile).dir;
-    
-    //console.log('proc main', processMainFile, fileMetaFile, isProcessMain);
     
     const nearestPackage = getNearestPackageInformation(fileMeta.filePath.dir, isProcessMain || inDirWithProcessMain);
     
