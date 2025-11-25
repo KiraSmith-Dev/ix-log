@@ -199,8 +199,6 @@ function getFileDetails(options) {
     if (!nearestPackage)
         return info;
     info.service = nearestPackage.name;
-    const callerContainerEntryPoint = getSourceMappedFilePath(path_1.default.join(nearestPackage.dir, nearestPackage.main), options);
-    const callerIsEntryPoint = path_1.default.format(fileMeta.filePath) === callerContainerEntryPoint;
     // If it's the process entry point, omit file name - service name will show alone
     if (isProcessMain)
         return info;
