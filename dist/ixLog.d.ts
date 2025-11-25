@@ -1,34 +1,35 @@
-import chalk from 'chalk';
+import chalk, { ChalkInstance } from 'chalk';
 import { IxLogger, IxLogLevelData } from './levels';
 import { IxMiscOptions } from './configuration';
 export { chalk };
 export { defaultOptions } from './configuration';
 export declare function newIxLogger<T extends IxLogLevelData>(logLevelData: T, options?: Partial<IxMiscOptions>): IxLogger<T>;
-export declare const defaultIxLogger: IxLogger<{
+export declare const log: IxLogger<{
     critical: {
         symbol: string;
-        color: chalk.Chalk;
+        color: ChalkInstance;
     };
     error: {
         symbol: string;
-        color: chalk.Chalk;
+        color: ChalkInstance;
     };
     warn: {
         symbol: string;
-        color: chalk.Chalk;
+        color: ChalkInstance;
     };
     info: {
         symbol: string;
-        color: chalk.Chalk;
+        color: ChalkInstance;
     };
     verbose: {
         symbol: string;
-        color: chalk.Chalk;
+        color: ChalkInstance;
     };
     trace: {
         symbol: string;
-        color: chalk.Chalk;
+        color: ChalkInstance;
     };
 }>;
-export default defaultIxLogger;
+export { addColorToTransport } from './configuration';
+export default log;
 //# sourceMappingURL=ixLog.d.ts.map

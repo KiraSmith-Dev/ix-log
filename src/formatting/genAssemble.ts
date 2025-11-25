@@ -10,7 +10,7 @@ function truncateText(txt: string, maxLength: number) {
     return `${txt.substring(0, maxLength - 2)}..`;
 }
 
-export default function generateAssembleFormat<T extends IxLogLevelData>(level: IxLevel<T>, options: IxConfigurationManager<T>, fileDetails: FileDetails, inspectedData: string) {
+export default function generateAssembleFormat<T extends IxLogLevelData>(level: IxLevel<T>, options: IxConfigurationManager<T>, fileDetails: FileDetails, inspectedData: string, useColor: boolean) {
     const maxLogSymbolLength = options.symbols.getMaxSymbolLength();
     
     function generateFileLabel(fileDetails: FileDetails, symbolLength: number) {
@@ -27,5 +27,5 @@ export default function generateAssembleFormat<T extends IxLogLevelData>(level: 
     const levelColor = options.colors.getForLevel(logLevel);
     
     const timestamp = DateTime.now().toFormat(options.misc.timestampFormat);
-    return `${timestamp} ${generateFileLabel(fileDetails, levelSymbol.length)} [${levelColor(levelSymbol)}] ${inspectedData}`;
+    return `${timestamp} ${generateFileLabel(fileDetails, levelSymbol.length)} [${useColor ? levelColor(levelSymbol) : levelSymbol}] ${inspectedData}`;
 }

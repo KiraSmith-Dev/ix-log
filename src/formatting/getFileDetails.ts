@@ -8,6 +8,13 @@ import { IxConfigurationManager } from '../configuration';
 const appRootPathString = appRootPath.toString();
 const appRootDirectoryName = path.parse(appRootPathString).name;
 
+// I'm just going to apologize up front if you find yourself trying to understand the content of this file
+// Essentially, we're trying to determine the most usable filename or package name to show in the logs
+// while also trying to respect source maps if they are enabled
+// ex: index.js is not very useful, but MyModuleName tells you where you are
+// Which may be the package.json name, or the containing folder name
+// We also try to support ts-node so that scripts ran with it will log correctly
+
 type PackageInformation = {
     name: string;
     main: string;
@@ -15,7 +22,7 @@ type PackageInformation = {
     dir: string;
 };
 
-const packageCache: Map<string, PackageInformation> = new Map();
+const packageCache: Map<string, PackageInformation | null> = new Map();
 
 function normalizePath(directory: string) {
     directory = path.normalize(directory);
@@ -26,7 +33,7 @@ function normalizePath(directory: string) {
 }
 
 function genDefaultPackageInformation(): PackageInformation {
-    return { name: appRootDirectoryName, main: 'index.js', hasPackageJSON: false,  dir: appRootPathString, };
+    return { name: appRootDirectoryName, main: 'index.xs', hasPackageJSON: false,  dir: appRootPathString, };
 }
 
 function getDirectoryPackageInformation(directory: string): PackageInformation {
@@ -49,33 +56,56 @@ function toUpperCamelCase(input: string): string {
     return firstLetterToUpperCase(input.replace( /-([a-z])/gi, ( _, match ) => match.toLocaleUpperCase()));
 }
 
-function setPackageInformation(dir: string, name: string | PackageInformation, main = '', hasPackageJSON = false): PackageInformation {
-    const packageInformation = typeof name === 'string' ? { name, main, hasPackageJSON, dir } : name;
+function setPackageInformation(cacheKey: string, packageInformation: PackageInformation | null): PackageInformation | null {
+    if (packageInformation === null) {
+        packageCache.set(cacheKey, packageInformation);
+        return packageInformation;
+    }
+    
+    console.log(`Setting package information for directory:`, packageInformation);
     packageInformation.name = toUpperCamelCase(packageInformation.name);
-    packageCache.set(dir, packageInformation);
+    packageCache.set(cacheKey, packageInformation);
     return packageInformation;
 }
 
-function getNearestPackageInformation(directory: string): PackageInformation {
-    directory = normalizePath(directory);
+function getNearestPackageInformation(directory: string, isEntryPoint = false): PackageInformation | null {
+    directory = path.resolve(normalizePath(directory));
+    const cacheKey = directory + (isEntryPoint ? '|entry' : '');
     
-    if (packageCache.has(directory))
-        return packageCache.get(directory) as PackageInformation;
+    if (packageCache.has(cacheKey))
+        return packageCache.get(cacheKey) as PackageInformation;
     
     const packageInformation = getDirectoryPackageInformation(directory);
     
     if (packageInformation.hasPackageJSON)
-        return setPackageInformation(directory, packageInformation);
+        return setPackageInformation(cacheKey, packageInformation);
     
     const thisDirectoryInfo = path.parse(directory);
+    console.log(`Parsed directory info:`, thisDirectoryInfo, directory);
+    // Dead end / root reached
+    if (thisDirectoryInfo.dir === directory)
+        return setPackageInformation(cacheKey, null);
     
-    try {
-        if (fs.statSync(path.join(directory, packageInformation.main)).isFile())
-            return setPackageInformation(directory, thisDirectoryInfo.name, packageInformation.main, false);
-    } catch {}
+    console.log(`Package information main:`, packageInformation.main);
+    if (packageInformation.main !== 'index.xs') {
+        return setPackageInformation(cacheKey, { dir: directory, name: thisDirectoryInfo.name, main: packageInformation.main, hasPackageJSON: false });
+    }
     
+    if (!isEntryPoint) {
+        try {
+            if (fs.statSync(path.join(directory, 'index.js')).isFile())
+                return setPackageInformation(cacheKey, { dir: directory, name: thisDirectoryInfo.name, main: 'index.js', hasPackageJSON: false });
+        } catch {}
+        
+        try {
+            if (fs.statSync(path.join(directory, 'index.ts')).isFile())
+                return setPackageInformation(cacheKey, { dir: directory, name: thisDirectoryInfo.name, main: 'index.ts', hasPackageJSON: false });
+        } catch {}
+    }
+    
+   
     // thisDirectoryInfo.dir will be the containing directory, so we're going up a level each time
-    return setPackageInformation(directory, getNearestPackageInformation(thisDirectoryInfo.dir));
+    return setPackageInformation(cacheKey, getNearestPackageInformation(thisDirectoryInfo.dir));
 }
 
 function isInside(parent: string, dir: string): boolean {
@@ -86,18 +116,26 @@ function isInside(parent: string, dir: string): boolean {
 }
 
 const fileToSourceMap = new Map<string, RawSourceMap>();
-function getSourceMapConsumerForFile(filePath: string): SourceMapConsumer | null {
+function getSourceMapForFile(filePath: string): RawSourceMap | null {
     if (fileToSourceMap.has(filePath))
-        return new SourceMapConsumer(fileToSourceMap.get(filePath)!);
+        return (fileToSourceMap.get(filePath)!);
     
     const sourceMapFilePath = filePath + '.map';
     try {
         const sourceMap = JSON.parse(fs.readFileSync(sourceMapFilePath, { encoding: 'ascii' }));
         fileToSourceMap.set(filePath, sourceMap);
-        return new SourceMapConsumer(sourceMap);
+        return sourceMap;
     } catch (error) {
         return null;
     }
+}
+
+function getSourceMapConsumerForFile(filePath: string): SourceMapConsumer | null {
+    const sourceMap = getSourceMapForFile(filePath);
+    if (sourceMap === null)
+        return null;
+    
+    return new SourceMapConsumer(sourceMap);
 }
 
 function getFileAndLineNumbers<T extends IxLogLevelData>(caller: easyReflect.Callsite, options: IxConfigurationManager<T>) {
@@ -105,63 +143,58 @@ function getFileAndLineNumbers<T extends IxLogLevelData>(caller: easyReflect.Cal
     if (!callerFilePath)
         return null;
     
+    const defaultFileMeta = {
+        filePath: path.parse(callerFilePath),
+        lineNumber: caller.getLineNumber() ?? 0,
+        columnNumber: caller.getColumnNumber() ?? 0
+    };
+    
     if (!options.misc.useSourceMaps)
-        return {
-            filePath: path.parse(callerFilePath),
-            lineNumber: caller.getLineNumber() ?? 0,
-            columnNumber: caller.getColumnNumber() ?? 0
-        }
+        return defaultFileMeta
     
     const sourceMapConsumer = getSourceMapConsumerForFile(callerFilePath);
+    // If a source map doesn't exist, return the default file meta
     if (!sourceMapConsumer)
-        return null;
+        return defaultFileMeta;
     
     function cleanup() {
         sourceMapConsumer!.destroy();
     }
     
     const originalPosition = sourceMapConsumer.originalPositionFor({
-        line: caller.getLineNumber() ?? 0,
-        column: caller.getColumnNumber() ?? 0
+        line: caller.getLineNumber() ?? 1,
+        column: caller.getColumnNumber() ?? 1
     });
     
     if (!originalPosition.source) {
         cleanup();
-        return null;
+        return defaultFileMeta;
     }
     
     cleanup();
+    
     return {
-        filePath: path.parse(originalPosition.source),
+        filePath: path.parse(path.join(path.parse(callerFilePath).dir, originalPosition.source)),
         lineNumber: originalPosition.line ?? 0,
         columnNumber: originalPosition.column ?? 0
     }
 }
 
-function getSourceMappedFilePath<T extends IxLogLevelData>(filePath: string, options: IxConfigurationManager<T>) {
+function getSourceMappedFilePath<T extends IxLogLevelData>(filePath: string, options: IxConfigurationManager<T>): string {
+    filePath = path.resolve(filePath);
     if (!options.misc.useSourceMaps)
         return filePath;
     
-    const sourceMapConsumer = getSourceMapConsumerForFile(filePath);
-    if (!sourceMapConsumer)
-        return null;
+    const sourceMap = getSourceMapForFile(filePath);
+    if (!sourceMap)
+        return filePath;
     
-    function cleanup() {
-        sourceMapConsumer!.destroy();
-    }
+    //console.log('Source map source:', sourceMap.sources[0]);
     
-    const originalPosition = sourceMapConsumer.originalPositionFor({
-        line: 1,
-        column: 1
-    });
+    if (!sourceMap.sources[0])
+        return filePath;
     
-    if (!originalPosition.source) {
-        cleanup();
-        return null;
-    }
-    
-    cleanup();
-    return originalPosition.source;
+    return path.resolve(path.join(path.parse(filePath).dir, sourceMap.sources[0]));
 }
 
 export interface FileDetails {
@@ -173,12 +206,13 @@ export interface FileDetails {
 
 export default function getFileDetails<T extends IxLogLevelData>(options: IxConfigurationManager<T>): FileDetails {
     const info: FileDetails = {};
-    const callers = easyReflect.getStack({ filter: callsite => !isInside(appRootPathString, callsite.getFileName() ?? '') });
+    const callers = easyReflect.getStack({ filter: callsite => !isInside(path.join(__dirname, '..', '..'), callsite.getFileName() ?? '') });
     if (!callers.length)
         return info;
     
     const caller = callers[0]!;
     const fileMeta = getFileAndLineNumbers(caller, options);
+    
     if (!fileMeta)
         return info;
     
@@ -189,18 +223,44 @@ export default function getFileDetails<T extends IxLogLevelData>(options: IxConf
     if (!callerFileContainer)
         return info;
     
-    const nearestPackage = getNearestPackageInformation(fileMeta.filePath.dir);
+    // If we can't get require.main.filename just fallback to the file name
+    const processMain = require.main && path.parse(getSourceMappedFilePath(require.main.filename, options) || '');
+    //console.log('req main filename:', require.main?.filename);
+    if (!processMain) {
+        console.log(`No require.main, falling back to file name only`);
+        info.file = fileMeta.filePath.name;
+        if (['index.ts', 'index.js', 'index'].includes(info.file))
+            info.file = '';
+        return info;
+    }
+    
+    const processMainFile = path.resolve(path.format(processMain));
+    const fileMetaFile = path.resolve(path.format(fileMeta.filePath));
+    const isProcessMain = processMainFile === fileMetaFile;
+    const inDirWithProcessMain = path.parse(processMainFile).dir === path.parse(fileMetaFile).dir;
+    
+    //console.log('proc main', processMainFile, fileMetaFile, isProcessMain);
+    
+    const nearestPackage = getNearestPackageInformation(fileMeta.filePath.dir, isProcessMain || inDirWithProcessMain);
+    
+    if (!nearestPackage)
+        return info;
     
     info.service = nearestPackage.name;
     
     const callerContainerEntryPoint = getSourceMappedFilePath(path.join(nearestPackage.dir, nearestPackage.main), options);
-    const callerIsEntryPoint = path.join(fileMeta.filePath.dir, fileMeta.filePath.base) === callerContainerEntryPoint;
+    const callerIsEntryPoint = path.format(fileMeta.filePath) === callerContainerEntryPoint;
     
-    // If it's the entry point of the whole process, omit file name - service name will show alone
-    if (callerIsEntryPoint && require.main && require.main.path === fileMeta.filePath.dir)
+    
+    
+    // If it's the process entry point, omit file name - service name will show alone
+    if (isProcessMain)
         return info;
     
-    // If it's the entry point, display the containing folder, otherwise show the file name (without extension)
-    info.file = callerIsEntryPoint ? callerFileContainer : fileMeta.filePath.name;
+    info.file = fileMeta.filePath.name;
+    
+    if (['index.ts', 'index.js', 'index'].includes(info.file))
+        info.file = '';
+    
     return info;
 }

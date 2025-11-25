@@ -15,7 +15,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 var _IxLoggerClass_levelHandler, _IxLoggerClass_logLevelData;
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.defaultIxLogger = exports.newIxLogger = exports.defaultOptions = exports.chalk = void 0;
+exports.addColorToTransport = exports.log = exports.newIxLogger = exports.defaultOptions = exports.chalk = void 0;
 const chalk_1 = __importDefault(require("chalk"));
 exports.chalk = chalk_1.default;
 const formatting_1 = __importDefault(require("./formatting"));
@@ -44,7 +44,9 @@ class IxLoggerClass {
         Object.keys(logLevelData).forEach(levelName => {
             this[levelName] = ((...args) => {
                 if (__classPrivateFieldGet(this, _IxLoggerClass_levelHandler, "f").shouldLog(String(levelName))) {
-                    console.log(format(String(levelName), args));
+                    const msgWithColor = format(String(levelName), args, true);
+                    const msgWithoutColor = format(String(levelName), args, false);
+                    this.options.misc.transports.forEach(transport => transport(transport[configuration_1.transportSupportsColor] ? msgWithColor : msgWithoutColor));
                 }
                 return this;
             });
@@ -59,6 +61,8 @@ function newIxLogger(logLevelData, options = {}) {
     return new IxLoggerClass(logLevelData, options);
 }
 exports.newIxLogger = newIxLogger;
-exports.defaultIxLogger = newIxLogger(levels_1.defaultLogLevelData);
-exports.default = exports.defaultIxLogger;
+exports.log = newIxLogger(levels_1.defaultLogLevelData);
+var configuration_3 = require("./configuration");
+Object.defineProperty(exports, "addColorToTransport", { enumerable: true, get: function () { return configuration_3.addColorToTransport; } });
+exports.default = exports.log;
 //# sourceMappingURL=ixLog.js.map

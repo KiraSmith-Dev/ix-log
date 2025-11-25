@@ -24,6 +24,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const IxLogger = __importStar(require("../ixLog"));
+const ixLog_1 = require("../ixLog");
 const log = IxLogger.newIxLogger({
     critical: { symbol: 'CRIT', color: '#5ffa0b' },
     error: { symbol: 'ERROR', color: IxLogger.chalk.redBright },
@@ -33,7 +34,11 @@ const log = IxLogger.newIxLogger({
     trace: { symbol: 'TRACE', color: IxLogger.chalk.magentaBright }
 }, {
     useSourceMaps: true,
-    fileLabelReservedLength: 20
+    fileLabelReservedLength: 20,
+    transports: [
+        console.log,
+        (0, ixLog_1.addColorToTransport)(msg => console.log(msg))
+    ]
 });
 log.critical(`127.0.0.1 - there's no place like home`);
 log.error(`127.0.0.1 - there's no place like home`);

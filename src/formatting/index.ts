@@ -10,7 +10,7 @@ export interface IxPrettyPrintOptions {
     stringQuotes?: boolean;
 }
 
-function inspectLogData(lengthBeforeContent: number, data: any[]) {
+function inspectLogData(lengthBeforeContent: number, data: any[], useColor: boolean) {
     // TODO:? Add options to ixInspect usage
     /*
     const inspectOptions = {
@@ -22,7 +22,7 @@ function inspectLogData(lengthBeforeContent: number, data: any[]) {
             delete inspectOptions.depth;
     */
     
-    const inspectedData = data.map(dataItem => ixInspect(dataItem, {}));
+    const inspectedData = data.map(dataItem => ixInspect(dataItem, { color: useColor }));
     return inspectedData.join(', ').replace(/\n/g, `\n${' '.repeat(lengthBeforeContent)}`);
 }
 
@@ -30,9 +30,9 @@ export default function generateIxFormatter<T extends IxLogLevelData>(options: I
     const maxLogSymbolLength = options.symbols.getMaxSymbolLength();
     const lengthBeforeContent = 6 + 1 + options.misc.fileLabelReservedLength + 1 + 1 + 1 + maxLogSymbolLength + 1 + 1;
     
-    return function formatData(level: IxLevel<T>, data: any[]) {
+    return function formatData(level: IxLevel<T>, data: any[], useColor: boolean) {
         const fileDetails = getFileDetails(options);
-        const inspectedData = inspectLogData(lengthBeforeContent, data); 
-        return generateAssembleFormat(level, options, fileDetails, inspectedData);
+        const inspectedData = inspectLogData(lengthBeforeContent, data, useColor); 
+        return generateAssembleFormat(level, options, fileDetails, inspectedData, useColor);
     }
 }

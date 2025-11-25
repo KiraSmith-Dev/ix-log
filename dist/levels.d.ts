@@ -1,37 +1,37 @@
-import chalk from 'chalk';
+import { ChalkInstance } from 'chalk';
 import { IxConfigurationManager } from './configuration';
 export declare const defaultLogLevelData: {
     critical: {
         symbol: string;
-        color: chalk.Chalk;
+        color: ChalkInstance;
     };
     error: {
         symbol: string;
-        color: chalk.Chalk;
+        color: ChalkInstance;
     };
     warn: {
         symbol: string;
-        color: chalk.Chalk;
+        color: ChalkInstance;
     };
     info: {
         symbol: string;
-        color: chalk.Chalk;
+        color: ChalkInstance;
     };
     verbose: {
         symbol: string;
-        color: chalk.Chalk;
+        color: ChalkInstance;
     };
     trace: {
         symbol: string;
-        color: chalk.Chalk;
+        color: ChalkInstance;
     };
 };
-export declare type IxLogLevelDataEntry<ColorType extends chalk.Chalk | string> = {
+export declare type IxLogLevelDataEntry<ColorType extends ChalkInstance | string> = {
     symbol: string;
     color?: ColorType;
 };
 export interface IxLogLevelData {
-    [key: string]: IxLogLevelDataEntry<chalk.Chalk | string>;
+    [key: string]: IxLogLevelDataEntry<ChalkInstance | string>;
 }
 interface IxLeveledLogMethod<T extends IxLogLevelData> {
     (...data: any[]): IxLogger<T>;

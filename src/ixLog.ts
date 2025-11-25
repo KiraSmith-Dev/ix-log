@@ -1,7 +1,7 @@
-import chalk from 'chalk';
+import chalk, { ChalkInstance } from 'chalk';
 import generateIxFormatter from './formatting';
 import { defaultLogLevelData, IxLogger, IxLevel, IxLogLevelDataEntry, IxLogLevelData } from './levels';
-import { IxConfigurationManager, IxMiscOptions } from './configuration';
+import { IxConfigurationManager, IxLogTransport, IxMiscOptions, addColorToTransport, transportSupportsColor } from './configuration';
 import { createLogLevelHandler } from './logLogic';
 
 // Expose basic dependencies for easy extending
@@ -18,11 +18,11 @@ class IxLoggerClass<T extends IxLogLevelData> {
     constructor(logLevelData: T, options: Partial<IxMiscOptions> = {}) {
         // Convert all logLevelData to chalk version
         (Object.keys(logLevelData) as (keyof T)[]).forEach(levelName => {
-            const color = (logLevelData[levelName] as IxLogLevelDataEntry<string> | IxLogLevelDataEntry<chalk.Chalk>).color;
+            const color = (logLevelData[levelName] as IxLogLevelDataEntry<string> | IxLogLevelDataEntry<ChalkInstance>).color;
             if (typeof color !== 'string')
                 return;
             
-            (logLevelData[levelName] as IxLogLevelDataEntry<chalk.Chalk>).color = chalk.hex(color);
+            (logLevelData[levelName] as IxLogLevelDataEntry<ChalkInstance>).color = chalk.hex(color);
         });
         
         this.#logLevelData = logLevelData;
@@ -35,7 +35,9 @@ class IxLoggerClass<T extends IxLogLevelData> {
         (Object.keys(logLevelData) as (IxLevel<T>)[]).forEach(levelName => {
             (this as any)[levelName] = ((...args: any[]): IxLogger<T> => {
                 if (this.#levelHandler.shouldLog(String(levelName))) {
-                    console.log(format(String(levelName), args))
+                    const msgWithColor = format(String(levelName), args, true);
+                    const msgWithoutColor = format(String(levelName), args, false);
+                    this.options.misc.transports.forEach(transport => transport(transport[transportSupportsColor] ? msgWithColor : msgWithoutColor));
                 }
                 
                 return this as unknown as IxLogger<T>; 
@@ -52,6 +54,10 @@ export function newIxLogger<T extends IxLogLevelData>(logLevelData: T, options: 
     return new IxLoggerClass<T>(logLevelData, options) as unknown as IxLogger<T>;
 }
 
-export const defaultIxLogger = newIxLogger(defaultLogLevelData);
+export const log = newIxLogger(defaultLogLevelData);
 
-export default defaultIxLogger;
+export const defaultIxLogger = log;
+
+export { addColorToTransport } from './configuration';
+
+export default log;

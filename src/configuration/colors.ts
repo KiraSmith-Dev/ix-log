@@ -1,4 +1,4 @@
-import chalk from 'chalk';
+import chalk, { ChalkInstance } from 'chalk';
 import { IxLevel, IxLogger, IxLogLevelDataEntry, IxLogLevelData } from '../levels';
 
 type TypeOfOption = 'string' | 'number' | 'bigint' | 'boolean' | 'symbol' | 'undefined' | 'object' | 'function';
@@ -21,15 +21,15 @@ export class IxColorConfiguration<T extends IxLogLevelData> {
         this.#logLevelData = logLevelData;
     }
     
-    levelToColorMap = new Map<keyof IxLogger<T>, chalk.Chalk>();
+    levelToColorMap = new Map<keyof IxLogger<T>, ChalkInstance>();
     
     getForLevel(level: IxLevel<T>) {
         // Defaulting to colors defined in the logLevelData if nothing else is defined
         // OK to cast since we're guaranteed that IxLevel<T> exists on T, typescript doesn't pick up on this automatically
-        return this.levelToColorMap.get(level) ?? (this.#logLevelData[level] as IxLogLevelDataEntry<chalk.Chalk>).color ?? chalk.white;
+        return this.levelToColorMap.get(level) ?? (this.#logLevelData[level] as IxLogLevelDataEntry<ChalkInstance>).color ?? chalk.white;
     }
     
-    setForLevel(level: IxLevel<T>, color: chalk.Chalk) {
+    setForLevel(level: IxLevel<T>, color: ChalkInstance) {
         this.levelToColorMap.set(level, color);
     }
     

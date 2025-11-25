@@ -1,10 +1,16 @@
 import { IxLogLevelData } from '../levels';
 import { IxColorConfiguration } from './colors';
 import { IxSymbolConfiguration } from './symbols';
+export declare const transportSupportsColor: unique symbol;
+export declare type IxLogTransport = ((message: string) => void) & {
+    [transportSupportsColor]?: true;
+};
+export declare function addColorToTransport(transport: IxLogTransport): IxLogTransport;
 export declare type IxMiscOptions = {
     fileLabelReservedLength: number;
     timestampFormat: string;
     useSourceMaps: boolean;
+    transports: IxLogTransport[];
 };
 export declare const defaultOptions: IxMiscOptions;
 export declare class IxConfigurationManager<T extends IxLogLevelData> {

@@ -1,4 +1,6 @@
 import * as IxLogger from '../ixLog';
+import { addColorToTransport } from '../ixLog';
+import fs from 'fs';
 
 const log = IxLogger.newIxLogger({
     critical: { symbol: 'CRIT',  color: '#5ffa0b' },
@@ -9,7 +11,11 @@ const log = IxLogger.newIxLogger({
     trace:    { symbol: 'TRACE', color: IxLogger.chalk.magentaBright }
 }, {
     useSourceMaps: true,
-    fileLabelReservedLength: 20
+    fileLabelReservedLength: 20,
+    transports: [
+        console.log, 
+        addColorToTransport(msg => console.log(msg))
+    ]
 });
 
 log.critical(`127.0.0.1 - there's no place like home`);

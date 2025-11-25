@@ -6,7 +6,7 @@ function truncateText(txt, maxLength) {
         return txt;
     return `${txt.substring(0, maxLength - 2)}..`;
 }
-function generateAssembleFormat(level, options, fileDetails, inspectedData) {
+function generateAssembleFormat(level, options, fileDetails, inspectedData, useColor) {
     const maxLogSymbolLength = options.symbols.getMaxSymbolLength();
     function generateFileLabel(fileDetails, symbolLength) {
         var _a, _b, _c, _d, _e;
@@ -21,7 +21,7 @@ function generateAssembleFormat(level, options, fileDetails, inspectedData) {
     const levelSymbol = options.symbols.getForLevel(logLevel);
     const levelColor = options.colors.getForLevel(logLevel);
     const timestamp = luxon_1.DateTime.now().toFormat(options.misc.timestampFormat);
-    return `${timestamp} ${generateFileLabel(fileDetails, levelSymbol.length)} [${levelColor(levelSymbol)}] ${inspectedData}`;
+    return `${timestamp} ${generateFileLabel(fileDetails, levelSymbol.length)} [${useColor ? levelColor(levelSymbol) : levelSymbol}] ${inspectedData}`;
 }
 exports.default = generateAssembleFormat;
 //# sourceMappingURL=genAssemble.js.map

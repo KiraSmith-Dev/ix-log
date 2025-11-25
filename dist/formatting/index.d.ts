@@ -5,5 +5,5 @@ export interface IxPrettyPrintOptions {
     depth?: number;
     stringQuotes?: boolean;
 }
-export default function generateIxFormatter<T extends IxLogLevelData>(options: IxConfigurationManager<T>): (level: IxLevel<T>, data: any[]) => string;
+export default function generateIxFormatter<T extends IxLogLevelData>(options: IxConfigurationManager<T>): (level: IxLevel<T>, data: any[], useColor: boolean) => string;
 //# sourceMappingURL=index.d.ts.map

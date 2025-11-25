@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const getFileDetails_1 = __importDefault(require("./getFileDetails"));
 const genAssemble_1 = __importDefault(require("./genAssemble"));
 const ix_inspect_1 = __importDefault(require("ix-inspect"));
-function inspectLogData(lengthBeforeContent, data) {
+function inspectLogData(lengthBeforeContent, data, useColor) {
     // TODO:? Add options to ixInspect usage
     /*
     const inspectOptions = {
@@ -17,16 +17,16 @@ function inspectLogData(lengthBeforeContent, data) {
     if (!inspectOptions.depth)
             delete inspectOptions.depth;
     */
-    const inspectedData = data.map(dataItem => (0, ix_inspect_1.default)(dataItem, {}));
+    const inspectedData = data.map(dataItem => (0, ix_inspect_1.default)(dataItem, { color: useColor }));
     return inspectedData.join(', ').replace(/\n/g, `\n${' '.repeat(lengthBeforeContent)}`);
 }
 function generateIxFormatter(options) {
     const maxLogSymbolLength = options.symbols.getMaxSymbolLength();
     const lengthBeforeContent = 6 + 1 + options.misc.fileLabelReservedLength + 1 + 1 + 1 + maxLogSymbolLength + 1 + 1;
-    return function formatData(level, data) {
+    return function formatData(level, data, useColor) {
         const fileDetails = (0, getFileDetails_1.default)(options);
-        const inspectedData = inspectLogData(lengthBeforeContent, data);
-        return (0, genAssemble_1.default)(level, options, fileDetails, inspectedData);
+        const inspectedData = inspectLogData(lengthBeforeContent, data, useColor);
+        return (0, genAssemble_1.default)(level, options, fileDetails, inspectedData, useColor);
     };
 }
 exports.default = generateIxFormatter;
