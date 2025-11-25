@@ -64,7 +64,6 @@ function setPackageInformation(cacheKey, packageInformation) {
         packageCache.set(cacheKey, packageInformation);
         return packageInformation;
     }
-    console.log(`Setting package information for directory:`, packageInformation);
     packageInformation.name = toUpperCamelCase(packageInformation.name);
     packageCache.set(cacheKey, packageInformation);
     return packageInformation;
@@ -78,11 +77,9 @@ function getNearestPackageInformation(directory, isEntryPoint = false) {
     if (packageInformation.hasPackageJSON)
         return setPackageInformation(cacheKey, packageInformation);
     const thisDirectoryInfo = path_1.default.parse(directory);
-    console.log(`Parsed directory info:`, thisDirectoryInfo, directory);
     // Dead end / root reached
     if (thisDirectoryInfo.dir === directory)
         return setPackageInformation(cacheKey, null);
-    console.log(`Package information main:`, packageInformation.main);
     if (packageInformation.main !== 'index.xs') {
         return setPackageInformation(cacheKey, { dir: directory, name: thisDirectoryInfo.name, main: packageInformation.main, hasPackageJSON: false });
     }
@@ -168,7 +165,6 @@ function getSourceMappedFilePath(filePath, options) {
     const sourceMap = getSourceMapForFile(filePath);
     if (!sourceMap)
         return filePath;
-    //console.log('Source map source:', sourceMap.sources[0]);
     if (!sourceMap.sources[0])
         return filePath;
     return path_1.default.resolve(path_1.default.join(path_1.default.parse(filePath).dir, sourceMap.sources[0]));
@@ -189,9 +185,7 @@ function getFileDetails(options) {
         return info;
     // If we can't get require.main.filename just fallback to the file name
     const processMain = require.main && path_1.default.parse(getSourceMappedFilePath(require.main.filename, options) || '');
-    //console.log('req main filename:', require.main?.filename);
     if (!processMain) {
-        console.log(`No require.main, falling back to file name only`);
         info.file = fileMeta.filePath.name;
         if (['index.ts', 'index.js', 'index'].includes(info.file))
             info.file = '';
@@ -201,7 +195,6 @@ function getFileDetails(options) {
     const fileMetaFile = path_1.default.resolve(path_1.default.format(fileMeta.filePath));
     const isProcessMain = processMainFile === fileMetaFile;
     const inDirWithProcessMain = path_1.default.parse(processMainFile).dir === path_1.default.parse(fileMetaFile).dir;
-    //console.log('proc main', processMainFile, fileMetaFile, isProcessMain);
     const nearestPackage = getNearestPackageInformation(fileMeta.filePath.dir, isProcessMain || inDirWithProcessMain);
     if (!nearestPackage)
         return info;
