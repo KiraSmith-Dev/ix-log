@@ -239,11 +239,6 @@ export default function getFileDetails<T extends IxLogLevelData>(options: IxConf
     
     info.service = nearestPackage.name;
     
-    const callerContainerEntryPoint = getSourceMappedFilePath(path.join(nearestPackage.dir, nearestPackage.main), options);
-    const callerIsEntryPoint = path.format(fileMeta.filePath) === callerContainerEntryPoint;
-    
-    
-    
     // If it's the process entry point, omit file name - service name will show alone
     if (isProcessMain)
         return info;
