@@ -10,4 +10,4 @@ jobs:
       contents: write
     uses: KiraSmith-Dev/KiraSmith-Dev/.github/workflows/npm-tag-version.yml@main
     with:
-      node-version: 16.x
+      node-version: 22.x

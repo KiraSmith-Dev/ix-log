@@ -10,5 +10,5 @@ jobs:
       contents: write
     uses: KiraSmith-Dev/KiraSmith-Dev/.github/workflows/build-test-commit.yml@main
     with:
-      node-version: 16.x
+      node-version: 22.x
       output-glob: 'dist/*'
